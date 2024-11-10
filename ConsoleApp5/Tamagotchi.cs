@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 
 public class Tamagotchi
@@ -9,7 +9,14 @@ public class Tamagotchi
     private int unfulfilledRequests = 0;
     private bool isSick = false;
     private bool isAlive = true;
-    private int lifetimeSeconds = 60; // Жизненный цикл 1 минута
+    private int lifetimeSeconds = 60;
+
+    // События
+    public event Action<string> OnRequest;
+    public event Action OnSick;
+    public event Action OnHealed;
+    public event Action<string> OnRequestFulfilled;
+    public event Action OnLifeEnd;
 
     public void StartLife()
     {
@@ -20,6 +27,7 @@ public class Tamagotchi
         {
             string request = GenerateRequest();
             DisplayTamagotchi(request);
+            OnRequest?.Invoke(request);
 
             Console.WriteLine($"Тамагочи просит: {request}. Удовлетворить? (да/нет)");
             string response = Console.ReadLine()?.ToLower();
@@ -39,7 +47,10 @@ public class Tamagotchi
         }
 
         if (isAlive)
+        {
+            OnLifeEnd?.Invoke();
             Console.WriteLine("Жизненный цикл Тамагочи завершён.");
+        }
     }
 
     private string GenerateRequest()
@@ -70,11 +81,14 @@ public class Tamagotchi
         if (accepted)
         {
             Console.WriteLine($"Вы выполнили просьбу: {request}.");
+            OnRequestFulfilled?.Invoke(request);
+
             if (isSick && request == "полечить")
             {
                 isSick = false;
                 unfulfilledRequests = 0;
                 Console.WriteLine("Тамагочи выздоровел!");
+                OnHealed?.Invoke();
             }
             else if (!isSick)
             {
@@ -92,6 +106,7 @@ public class Tamagotchi
                 {
                     isSick = true;
                     Console.WriteLine("Тамагочи заболел!");
+                    OnSick?.Invoke();
                 }
                 else if (request == "полечить")
                 {
